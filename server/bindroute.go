@@ -3,7 +3,7 @@ package server
 func BindRoutes() {
 	MainServer.Get("/", IndexRoute)
 
-	userRoute := MainServer.Group("/user")
+	userRoute := MainServer.Group("/api/auth")
 	userRoute.Post("/register", UserRegisterRoute)
 	userRoute.Post("/login", UserLoginRoute)
 
