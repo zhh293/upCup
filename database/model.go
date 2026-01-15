@@ -2,7 +2,11 @@ package database
 
 type UserTable struct {
 	Telephone string
-	Password  string // 应当用md5形式存储
+	Password  string // 使用bcrypt加密
+	UserID    string // userId = "user_" + telephone
+	Nickname  string
+	Avatar    string
+	Email     string
 }
 
 func (UserTable) TableName() string {
