@@ -24,6 +24,21 @@ func (DataTable) TableName() string {
 	return "data"
 }
 
+type AudioTable struct {
+	AudioID   string `json:"audioId" gorm:"column:audio_id"`
+	Telephone string `json:"telephone" gorm:"column:telephone"`
+	FileName  string `json:"fileName" gorm:"column:file_name"`
+	FileSize  int64  `json:"fileSize" gorm:"column:file_size"`
+	UploadTime int64 `json:"uploadTime" gorm:"column:upload_time"`
+	Duration  int    `json:"duration" gorm:"column:duration"`
+	Format    string `json:"format" gorm:"column:format"`
+	AudioURL  string `json:"audioUrl" gorm:"column:audio_url"`
+}
+
+func (AudioTable) TableName() string {
+	return "audio"
+}
+
 type LinkTable struct {
 	Telephone1 string
 	Telephone2 string

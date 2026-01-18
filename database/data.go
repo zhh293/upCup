@@ -23,3 +23,16 @@ func DataCounts(telephone string) int {
 	MainDB.Model(&DataTable{}).Where("telephone = ?", telephone).Count(&i)
 	return int(i)
 }
+
+func SaveAudio(audio *AudioTable) error {
+	return MainDB.Create(audio).Error
+}
+
+func GetAudioByID(audioID string) (*AudioTable, error) {
+	var audio AudioTable
+	result := MainDB.Model(&AudioTable{}).Where("audio_id = ?", audioID).First(&audio)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &audio, nil
+}

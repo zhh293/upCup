@@ -7,6 +7,10 @@ func BindRoutes() {
 	userRoute.Post("/register", UserRegisterRoute)
 	userRoute.Post("/login", UserLoginRoute)
 
+	antiScamRoute := userRoute.Group("/anti-scam", UserPermissionMiddleware)
+	antiScamRoute.Post("/upload-audio", AntiScamUploadAudioRoute)
+	antiScamRoute.Post("/analyze", AntiScamAnalyzeRoute)
+
 	aiRoute := MainServer.Group("/ai", UserPermissionMiddleware)
 	aiRoute.Post("/run", AIApiRoute)
 

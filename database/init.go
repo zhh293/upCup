@@ -20,7 +20,7 @@ func Init() {
 	default:
 		panic(setting.SettingVar.Database.TypeName + "是不支持的数据库类型")
 	}
-	MainDB.AutoMigrate(&UserTable{}, &LinkTable{}, &DataTable{})
+	MainDB.AutoMigrate(&UserTable{}, &LinkTable{}, &DataTable{}, &AudioTable{})
 	RedisClient = redis.NewClient(&redis.Options{
 		Addr: "localhost:" + strconv.Itoa(setting.SettingVar.RedisPort),
 	})
