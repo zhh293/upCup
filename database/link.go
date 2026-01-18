@@ -69,3 +69,53 @@ func LinkGetAll(telephone string) []string {
 	}
 	return i
 }
+
+type LinkedAccount struct {
+	ID    uint   `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func LinkedAccountList(userID string) ([]LinkedAccount, error) {
+	var records []LinkedAccountTable
+	result := MainDB.Model(&LinkedAccountTable{}).Where("user_id = ?", userID).Find(&records)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	linkedAccounts := make([]LinkedAccount, 0, len(records))
+	for _, record := range records {
+		linkedAccounts = append(linkedAccounts, LinkedAccount{
+			ID:    record.ID,
+			Name:  record.Name,
+			Email: record.Email,
+		})
+	}
+	return linkedAccounts, nil
+}
+
+func LinkedAccountAdd(userID string, name string, email string) (*LinkedAccount, error) {
+	record := LinkedAccountTable{
+		UserID: userID,
+		Name:   name,
+		Email:  email,
+	}
+	result := MainDB.Create(&record)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &LinkedAccount{
+		ID:    record.ID,
+		Name:  record.Name,
+		Email: record.Email,
+	}, nil
+}
+
+func LinkedAccountRemove(userID string, id uint) error {
+	var record LinkedAccountTable
+	result := MainDB.Where("id = ? AND user_id = ?", id, userID).First(&record)
+	if result.Error != nil {
+		return result.Error
+	}
+	deleteResult := MainDB.Delete(&record)
+	return deleteResult.Error
+}

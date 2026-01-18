@@ -1,39 +1,129 @@
 package server
 
 import (
+	"strconv"
+
 	"github.com/dingdinglz/ai-swindle-detecter-backend/database"
 	"github.com/gofiber/fiber/v2"
 )
 
+type linkAddRequest struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func LinkListRoute(c *fiber.Ctx) error {
+	userIDValue := c.Locals("user_id")
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		return c.JSON(fiber.Map{
+			"code":    401,
+			"message": "未认证",
+			"data":    nil,
+		})
+	}
+
+	linkedAccounts, err := database.LinkedAccountList(userID)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"code":    500,
+			"message": "获取关联账户失败",
+			"data":    nil,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"code":    200,
+		"message": "success",
+		"data":    linkedAccounts,
+	})
+}
+
 func LinkAddRoute(c *fiber.Ctx) error {
-	if c.FormValue("telephone1", "") == "" || c.FormValue("telephone2", "") == "" {
-		return c.JSON(fiber.Map{"code": 1, "message": "参数不全"})
+	userIDValue := c.Locals("user_id")
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		return c.JSON(fiber.Map{
+			"code":    401,
+			"message": "未认证",
+			"data":    nil,
+		})
 	}
-	e := database.LinkAdd(c.FormValue("telephone1"), c.FormValue("telephone2"))
-	if e != nil {
-		return c.JSON(fiber.Map{"code": 2, "message": "关联已存在"})
+
+	var req linkAddRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.JSON(fiber.Map{
+			"code":    400,
+			"message": "请求体解析失败",
+			"data":    nil,
+		})
 	}
-	return c.JSON(fiber.Map{"code": 0, "message": ""})
+
+	if req.Name == "" || req.Email == "" {
+		return c.JSON(fiber.Map{
+			"code":    400,
+			"message": "参数不全",
+			"data":    nil,
+		})
+	}
+
+	record, err := database.LinkedAccountAdd(userID, req.Name, req.Email)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"code":    500,
+			"message": "添加失败",
+			"data":    nil,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"code":    200,
+		"message": "添加成功",
+		"data":    record,
+	})
 }
 
-func LinkExsitRoute(c *fiber.Ctx) error {
-	if c.FormValue("telephone1", "") == "" || c.FormValue("telephone2", "") == "" {
-		return c.JSON(fiber.Map{"code": 1, "message": "参数不全"})
+func LinkRemoveRoute(c *fiber.Ctx) error {
+	userIDValue := c.Locals("user_id")
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		return c.JSON(fiber.Map{
+			"code":    401,
+			"message": "未认证",
+			"data":    nil,
+		})
 	}
-	if database.LinkExsit(c.FormValue("telephone1"), c.FormValue("telephone2")) {
-		return c.JSON(fiber.Map{"code": 0, "message": "", "exist": true})
-	}
-	return c.JSON(fiber.Map{"code": 0, "message": "", "exist": false})
-}
 
-func LinkGetRoute(c *fiber.Ctx) error {
-	if c.FormValue("telephone", "") == "" {
-		return c.JSON(fiber.Map{"code": 1, "message": "参数不全"})
+	idParam := c.Params("id", "")
+	if idParam == "" {
+		return c.JSON(fiber.Map{
+			"code":    400,
+			"message": "参数不全",
+			"data":    nil,
+		})
 	}
-	req := c.GetReqHeaders()
-	if req["Telephone"][0] != c.FormValue("telephone") {
-		return c.JSON(fiber.Map{"code": 2, "message": "权限错误"})
+
+	idValue, err := strconv.Atoi(idParam)
+	if err != nil || idValue <= 0 {
+		return c.JSON(fiber.Map{
+			"code":    400,
+			"message": "参数错误",
+			"data":    nil,
+		})
 	}
-	res := database.LinkGetAll(c.FormValue("telephone"))
-	return c.JSON(fiber.Map{"code": 0, "message": "", "data": res})
+
+	err = database.LinkedAccountRemove(userID, uint(idValue))
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"code":    404,
+			"message": "关联账户不存在",
+			"data":    nil,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"code":    200,
+		"message": "移除成功",
+		"data":    nil,
+	})
 }

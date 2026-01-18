@@ -86,3 +86,21 @@ func GetUserByTelephone(telephone string) (*UserInfo, error) {
 	}, nil
 }
 
+func ChangePassword(telephone string, currentPassword string, newPassword string) error {
+	var user UserTable
+	result := MainDB.Model(&UserTable{}).Where("telephone = ?", telephone).First(&user)
+	if result.Error != nil {
+		return errors.New("not exist")
+	}
+	if !tools.CheckPassword(currentPassword, user.Password) {
+		return errors.New("password incorrect")
+	}
+	hashedPassword, err := tools.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	user.Password = hashedPassword
+	saveResult := MainDB.Save(&user)
+	return saveResult.Error
+}
+

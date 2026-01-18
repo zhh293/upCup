@@ -47,3 +47,14 @@ type LinkTable struct {
 func (LinkTable) TableName() string {
 	return "link"
 }
+
+type LinkedAccountTable struct {
+	ID     uint   `gorm:"primaryKey;autoIncrement"`
+	UserID string `gorm:"column:user_id"`
+	Name   string `gorm:"column:name"`
+	Email  string `gorm:"column:email"`
+}
+
+func (LinkedAccountTable) TableName() string {
+	return "linked_account"
+}

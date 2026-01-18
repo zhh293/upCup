@@ -74,9 +74,73 @@ func UserLoginRoute(c *fiber.Ctx) error {
 			"avatar":       userInfo.Avatar,
 			"email":        userInfo.Email,
 			"access_token": token,
-			"token_type":  setting.SettingVar.JWT.TokenType,
+			"token_type":   setting.SettingVar.JWT.TokenType,
 			"expires_in":   setting.SettingVar.JWT.ExpiresIn,
 		},
+	})
+}
+
+type changePasswordRequest struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
+func UserLogoutRoute(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"code":    200,
+		"message": "登出成功",
+		"data":    nil,
+	})
+}
+
+func UserChangePasswordRoute(c *fiber.Ctx) error {
+	telephoneValue := c.Locals("telephone")
+	telephone, ok := telephoneValue.(string)
+	if !ok || telephone == "" {
+		return c.JSON(fiber.Map{
+			"code":    401,
+			"message": "未认证",
+			"data":    nil,
+		})
+	}
+
+	var req changePasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.JSON(fiber.Map{
+			"code":    400,
+			"message": "请求体解析失败",
+			"data":    nil,
+		})
+	}
+
+	if req.CurrentPassword == "" || req.NewPassword == "" {
+		return c.JSON(fiber.Map{
+			"code":    400,
+			"message": "参数不全",
+			"data":    nil,
+		})
+	}
+
+	err := database.ChangePassword(telephone, req.CurrentPassword, req.NewPassword)
+	if err != nil {
+		if err.Error() == "password incorrect" {
+			return c.JSON(fiber.Map{
+				"code":    401,
+				"message": "原密码错误",
+				"data":    nil,
+			})
+		}
+		return c.JSON(fiber.Map{
+			"code":    500,
+			"message": "密码修改失败",
+			"data":    nil,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"code":    200,
+		"message": "密码修改成功，请重新登录",
+		"data":    nil,
 	})
 }
 
