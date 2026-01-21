@@ -23,7 +23,17 @@ import (
 )
 
 func AIApiRoute(c *fiber.Ctx) error {
-	if c.FormValue("text", "") == "" {
+	var req struct {
+		Text string `json:"text" form:"text"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		// 忽略解析错误，尝试直接获取 FormValue 作为回退
+	}
+	if req.Text == "" {
+		req.Text = c.FormValue("text")
+	}
+
+	if req.Text == "" {
 		return c.JSON(fiber.Map{"code": -1, "message": "参数不全"})
 	}
 	telephone := c.Locals("telephone").(string)
@@ -37,7 +47,7 @@ func AIApiRoute(c *fiber.Ctx) error {
 		}
 		return c.JSON(fiber.Map{"code": 0, "message": "", "type": "中性"})
 	}
-	res := ai.Run(c.FormValue("text", ""), setting.SettingVar.AIPort)
+	res := ai.Run(req.Text, setting.SettingVar.AIPort)
 	if res == "err" {
 		return c.JSON(fiber.Map{"code": 1, "message": "ai error"})
 	}

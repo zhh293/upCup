@@ -10,14 +10,34 @@ import (
 )
 
 func DataAddRoute(c *fiber.Ctx) error {
-	if c.FormValue("telephone", "") == "" || c.FormValue("type", "") == "" || c.FormValue("text", "") == "" || c.FormValue("package", "") == "" {
+	var req struct {
+		Telephone string `json:"telephone" form:"telephone"`
+		Type      string `json:"type" form:"type"`
+		Text      string `json:"text" form:"text"`
+		Package   string `json:"package" form:"package"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		// 忽略解析错误
+	}
+	
+	// 回退机制：如果 BodyParser 没解析到，尝试 FormValue
+	if req.Telephone == "" { req.Telephone = c.FormValue("telephone") }
+	if req.Type == "" { req.Type = c.FormValue("type") }
+	if req.Text == "" { req.Text = c.FormValue("text") }
+	if req.Package == "" { req.Package = c.FormValue("package") }
+
+	if req.Telephone == "" || req.Type == "" || req.Text == "" || req.Package == "" {
 		return c.JSON(fiber.Map{"code": -1, "message": "参数不全"})
 	}
-	headMap := c.GetReqHeaders()
-	if !database.UserCheckAllow(c.FormValue("telephone", ""), headMap["Telephone"][0]) {
+	// 从 Token 获取当前操作用户的手机号
+	currentUser := c.Locals("telephone").(string)
+	targetUser := req.Telephone
+
+	// 检查权限：操作人必须是本人或者与目标用户存在关联
+	if !database.UserCheckAllow(targetUser, currentUser) {
 		return c.JSON(fiber.Map{"code": 1, "message": "权限错误"})
 	}
-	database.DataAdd(c.FormValue("package"), c.FormValue("telephone"), c.FormValue("text"), c.FormValue("type"))
+	database.DataAdd(req.Package, targetUser, req.Text, req.Type)
 	return c.JSON(fiber.Map{"code": 0, "message": ""})
 }
 
@@ -25,11 +45,13 @@ func DataGetRoute(c *fiber.Ctx) error {
 	if c.Query("telephone", "") == "" {
 		return c.JSON(fiber.Map{"code": -1, "message": "参数不全"})
 	}
-	headMap := c.GetReqHeaders()
-	if !database.UserCheckAllow(c.Query("telephone"), headMap["Telephone"][0]) {
+	currentUser := c.Locals("telephone").(string)
+	targetUser := c.Query("telephone", "")
+
+	if !database.UserCheckAllow(targetUser, currentUser) {
 		return c.JSON(fiber.Map{"code": 1, "message": "权限错误"})
 	}
-	i := database.DataGet(c.Query("telephone"))
+	i := database.DataGet(targetUser)
 	return c.JSON(fiber.Map{"code": 0, "message": "", "data": i})
 }
 
@@ -37,8 +59,10 @@ func DataCutGetRoute(c *fiber.Ctx) error {
 	if c.FormValue("page", "") == "" || c.FormValue("telephone", "") == "" || c.FormValue("cut", "") == "" {
 		return c.JSON(fiber.Map{"code": -1, "message": "参数不全"})
 	}
-	headMap := c.GetReqHeaders()
-	if !database.UserCheckAllow(c.FormValue("telephone"), headMap["Telephone"][0]) {
+	currentUser := c.Locals("telephone").(string)
+	targetUser := c.FormValue("telephone", "")
+
+	if !database.UserCheckAllow(targetUser, currentUser) {
 		return c.JSON(fiber.Map{"code": 1, "message": "权限错误"})
 	}
 	page := tools.StringToInt(c.FormValue("page"))
