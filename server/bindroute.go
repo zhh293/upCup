@@ -19,6 +19,7 @@ func BindRoutes() {
 	linkRoute.Get("/list", LinkListRoute)
 	linkRoute.Post("/add", LinkAddRoute)
 	linkRoute.Delete("/remove/:id", LinkRemoveRoute)
+	linkRoute.Get("/sms", LinkGetSMSRoute)
 
 	aiRoute := MainServer.Group("/ai", UserPermissionMiddleware)
 	aiRoute.Post("/run", AIApiRoute)

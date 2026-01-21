@@ -155,3 +155,32 @@ func LinkRemoveRoute(c *fiber.Ctx) error {
 		"data":    nil,
 	})
 }
+
+func LinkGetSMSRoute(c *fiber.Ctx) error {
+	currentUser := c.Locals("telephone").(string)
+	targetUser := c.Query("telephone", "")
+
+	if targetUser == "" {
+		return c.JSON(fiber.Map{
+			"code":    400,
+			"message": "参数不全",
+			"data":    nil,
+		})
+	}
+
+	// 检查权限 (UserCheckAllow 会检查是否是本人或已存在关联)
+	if !database.UserCheckAllow(targetUser, currentUser) {
+		return c.JSON(fiber.Map{
+			"code":    403,
+			"message": "权限错误或未关联",
+			"data":    nil,
+		})
+	}
+
+	data := database.DataGet(targetUser)
+	return c.JSON(fiber.Map{
+		"code":    0,
+		"message": "",
+		"data":    data,
+	})
+}
