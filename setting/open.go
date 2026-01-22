@@ -24,6 +24,7 @@ func SystemPrepare() {
 func Open() {
 	if !tools.IsFileOrDirExist(filepath.Join(RootPath, "data", "setting.json")) {
 		SettingVar.Port = "7000"
+		SettingVar.AIHost = "127.0.0.1"
 		SettingVar.AIPort = 6666
 		SettingVar.Debug = false
 		SettingVar.Database.TypeName = "sqlite"
@@ -46,6 +47,9 @@ func Open() {
 		}
 		if SettingVar.JWT.TokenType == "" {
 			SettingVar.JWT.TokenType = "Bearer"
+		}
+		if SettingVar.AIHost == "" {
+			SettingVar.AIHost = "127.0.0.1"
 		}
 	}
 	if SettingVar.Debug {

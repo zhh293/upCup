@@ -14,7 +14,9 @@ import (
 
 // 初始化并启动服务器
 func Init() {
-	MainServer = fiber.New()
+	MainServer = fiber.New(fiber.Config{
+		BodyLimit: 55 * 1024 * 1024, // 55MB
+	})
 	MainServer.Use(logger.New(), recover.New(), cors.New())
 	MainServer.Get("/monitor", monitor.New())
 	MainServer.Static("/static/audio", filepath.Join(setting.RootPath, "data", "audio"))
